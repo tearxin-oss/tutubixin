@@ -509,6 +509,14 @@
     font-weight: 800;
     line-height: 1.3;
   }
+  .sc-gift-contact {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 600;
+  }
   .sc-slogan {
     text-align: center;
     font-size: 16px;
@@ -654,6 +662,7 @@
       <div style="font-size:15px; color:var(--ink); font-weight:700; margin-bottom:6px;">"孩子的画，是孩子的话。"</div>
       <span class="brand">涂涂笔芯 tútú art school</span><br>
       📍 上海市杨浦区紫荆广场 L3-03<br>
+      📞 小丛老师 150 2178 4342（同微信）<br>
       <br>
       © 涂涂笔芯 2026
     </div>
@@ -688,6 +697,7 @@
     <div class="sc-gift">
       <div class="sc-gift-title">🎁 涂涂笔芯独家福利</div>
       <div class="sc-gift-main">凭测试结果到店<br>送一节体验课</div>
+      <div class="sc-gift-contact">📞 小丛老师 150 2178 4342（同微信）</div>
     </div>
 
     <div class="sc-qr-block">
@@ -1173,7 +1183,7 @@ const app = {
     gift.className = 'gift-bubble';
     gift.innerHTML = '<div class="gift-title">🎁 涂涂笔芯独家福利</div>' +
                      '<div class="gift-text">凭测试结果到店<br>送一节体验课</div>' +
-                     '<div class="gift-sub">📍 上海市杨浦区紫荆广场 L3-03</div>';
+                     '<div class="gift-sub">📍 上海市杨浦区紫荆广场 L3-03<br>📞 小丛老师 150 2178 4342（同微信）</div>';
     body.appendChild(gift);
   },
 
