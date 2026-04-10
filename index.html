@@ -179,8 +179,12 @@
     color: var(--ink);
     font-family: inherit;
     transition: all 0.15s;
+    outline: none;
   }
-  .option:hover { border-color: var(--accent); background: var(--accent-soft); }
+  /* 只在鼠标悬停时高亮，不在 focus 时高亮（避免移动端按完上一题后下一题的对应位置自动亮） */
+  @media (hover: hover) {
+    .option:hover { border-color: var(--accent); background: var(--accent-soft); }
+  }
   .option:active { transform: scale(0.98); }
   .option.selected {
     background: var(--accent-soft);
@@ -1102,6 +1106,10 @@ const app = {
       this.scores[painter] = (this.scores[painter] || 0) + points;
     });
     this.history.push(opt);
+    // 主动 blur 当前 active element，避免下一题按钮继承 focus 高亮
+    if (document.activeElement && document.activeElement.blur) {
+      document.activeElement.blur();
+    }
     this.current++;
     if (this.current >= this.shuffledOrder.length) {
       this.finish();
