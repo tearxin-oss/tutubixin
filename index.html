@@ -357,13 +357,20 @@
     font-weight: 700;
   }
 
-  /* ===== Share Card (off-screen, used for image generation) ===== */
+  /* ===== Share Card (rendered at top, hidden via opacity for image gen) ===== */
   .share-card-wrap {
-    position: fixed;
-    left: -9999px;
+    position: absolute;
     top: 0;
+    left: 0;
     width: 540px;
     background: var(--bg);
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+  }
+  .share-card-wrap.capturing {
+    opacity: 1;
+    z-index: 1000;
   }
   .share-card {
     width: 540px;
@@ -1200,16 +1207,21 @@ const app = {
     btn.textContent = '⏳ 生成中…';
     btn.disabled = true;
 
+    const wrap = document.querySelector('.share-card-wrap');
     try {
       this.populateShareCard();
-      // 等一帧让 DOM 更新
-      await new Promise(r => setTimeout(r, 200));
+      // 临时显示卡片，等渲染完成（包括二维码 canvas）
+      wrap.classList.add('capturing');
+      await new Promise(r => setTimeout(r, 500));
 
       const cardEl = document.getElementById('share-card');
       const canvas = await html2canvas(cardEl, {
-        backgroundColor: '#faf6ee',
-        scale: 2, // 高清
+        backgroundColor: '#fdf8ee',
+        scale: 2,
         useCORS: true,
+        logging: false,
+        allowTaint: true,
+        windowWidth: 540,
       });
       const dataUrl = canvas.toDataURL('image/png');
 
@@ -1218,8 +1230,9 @@ const app = {
       document.getElementById('share-modal').classList.add('active');
     } catch (e) {
       console.error('生成分享图失败:', e);
-      alert('生成失败了，截图分享也可以哦 :)');
+      alert('生成失败了：' + (e && e.message ? e.message : '未知错误') + '\n\n你可以直接截图分享 :)');
     } finally {
+      wrap.classList.remove('capturing');
       btn.textContent = originalText;
       btn.disabled = false;
     }
