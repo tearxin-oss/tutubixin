@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>TuBTI · 你是哪个画家 · 涂涂笔芯</title>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root {
     --bg: #fdf8ee;
@@ -525,7 +525,8 @@
     padding: 18px 20px;
   }
   .sc-qr-block #sc-qrcode { width: 90px; height: 90px; flex-shrink: 0; }
-  .sc-qr-block #sc-qrcode canvas { width: 100% !important; height: 100% !important; }
+  .sc-qr-block #sc-qrcode canvas,
+  .sc-qr-block #sc-qrcode img { width: 100% !important; height: 100% !important; display: block; }
   .sc-qr-text {
     font-size: 13px;
     line-height: 1.7;
@@ -1186,17 +1187,19 @@ const app = {
     // 生成二维码
     const qrEl = document.getElementById('sc-qrcode');
     qrEl.innerHTML = '';
-    // 用当前页面 URL 作为二维码内容；本地打开时给一个友好提示
-    let qrUrl = window.location.href;
+    // 用当前页面 URL 作为二维码内容
+    let qrUrl = window.location.href.split('#')[0].split('?')[0];
     if (qrUrl.startsWith('file://')) {
-      qrUrl = 'https://tubti.example.com'; // 上线后替换为真实 URL
+      qrUrl = 'https://tutubixin.pages.dev';
     }
-    QRCode.toCanvas(qrEl, qrUrl, {
+    // qrcodejs 库的 API：new QRCode(element, options)
+    new QRCode(qrEl, {
+      text: qrUrl,
       width: 180,
-      margin: 1,
-      color: { dark: '#2a2418', light: '#ffffff' },
-    }, (err) => {
-      if (err) console.error('QR code error:', err);
+      height: 180,
+      colorDark: '#2a2418',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M,
     });
   },
 
