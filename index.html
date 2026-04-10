@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TuBTI · 你是哪个画家 · 涂涂笔芯</title>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<style>
+  :root {
+    --bg: #fdf8ee;
+    --paper: #ffffff;
+    --ink: #2a2418;
+    --muted: #847b6a;
+    --accent: #e8842a;
+    --accent-soft: #fce8d0;
+    --accent-deep: #c66a14;
+    --blue: #2c70a8;
+    --line: #ecdfc5;
+    --shadow: 0 12px 40px rgba(60, 45, 20, 0.08);
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    line-height: 1.7;
+  }
+
+  .shell {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 24px 18px 60px;
+  }
+
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* ===== Welcome ===== */
+  .welcome {
+    text-align: center;
+    padding: 60px 20px 40px;
+  }
+  .brand-tag {
+    display: inline-block;
+    font-size: 12px;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    background: var(--paper);
+    border-radius: 999px;
+    padding: 6px 14px;
+    margin-bottom: 24px;
+    letter-spacing: 0.05em;
+  }
+  .welcome h1 {
+    font-size: clamp(36px, 8vw, 56px);
+    line-height: 1.1;
+    margin: 0 0 16px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+  }
+  .welcome h1 .accent { color: var(--accent); }
+  .welcome .subtitle {
+    font-size: 15px;
+    color: var(--muted);
+    margin: 0 auto 36px;
+    max-width: 320px;
+    line-height: 1.7;
+  }
+  .doodle {
+    font-size: 56px;
+    margin: 24px 0;
+    letter-spacing: 8px;
+  }
+  .start-btn {
+    background: var(--ink);
+    color: #fff;
+    border: 0;
+    padding: 18px 48px;
+    border-radius: 999px;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    transition: transform 0.15s, box-shadow 0.15s;
+    font-family: inherit;
+  }
+  .start-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2); }
+  .start-btn:active { transform: translateY(0); }
+  .meta {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 30px;
+  }
+
+  /* ===== Question ===== */
+  .qcard {
+    background: var(--paper);
+    border-radius: 24px;
+    padding: 28px 24px 24px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--line);
+    margin-top: 16px;
+  }
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .back-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-family: inherit;
+  }
+  .back-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .back-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .back-btn:disabled:hover { color: var(--muted); border-color: var(--line); }
+  .progress-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--line);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+  .progress-num {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .question-text {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.4;
+    margin: 0 0 6px;
+    color: var(--ink);
+  }
+  .question-hint {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 22px;
+  }
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .option {
+    background: #fbf8f0;
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 16px 18px;
+    cursor: pointer;
+    text-align: left;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--ink);
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .option:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .option:active { transform: scale(0.98); }
+  .option.selected {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .hit-mark {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+
+  /* ===== Result ===== */
+  .result-card {
+    background: var(--paper);
+    border-radius: 28px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    margin-top: 16px;
+  }
+  .result-header {
+    background: var(--ink);
+    color: #fff;
+    padding: 36px 28px 32px;
+    text-align: center;
+  }
+  .result-tag {
+    display: inline-block;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    padding: 5px 14px;
+    margin-bottom: 16px;
+    letter-spacing: 0.1em;
+  }
+  .result-painter {
+    font-size: clamp(34px, 8vw, 48px);
+    font-weight: 900;
+    line-height: 1.1;
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+  }
+  .result-painter .en {
+    display: block;
+    font-size: clamp(13px, 3vw, 16px);
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    margin-top: 8px;
+  }
+  .result-school {
+    font-size: 14px;
+    color: var(--accent);
+    margin-top: 14px;
+    font-weight: 600;
+  }
+  .match-row {
+    margin-top: 22px;
+    padding-top: 22px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  .match-label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 0.08em;
+  }
+  .match-num {
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--accent);
+    margin-top: 4px;
+    letter-spacing: -0.02em;
+  }
+  .match-num small { font-size: 18px; }
+  .result-body {
+    padding: 30px 26px 26px;
+  }
+  .result-body p {
+    font-size: 15px;
+    line-height: 1.85;
+    margin: 0 0 18px;
+    color: var(--ink);
+  }
+  .result-body .highlight {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    padding: 18px 18px;
+    border-radius: 0 12px 12px 0;
+    margin: 22px 0;
+  }
+  .result-body .highlight strong {
+    display: block;
+    color: var(--accent);
+    margin-bottom: 6px;
+    font-size: 14px;
+    letter-spacing: 0.05em;
+  }
+  .brand-bubble {
+    background: #fff8ef;
+    border: 1px dashed #e6c98a;
+    border-radius: 16px;
+    padding: 18px;
+    margin-top: 22px;
+    font-size: 14px;
+    line-height: 1.75;
+    color: #6b5a3a;
+  }
+  .brand-bubble strong { color: var(--accent-deep); }
+
+  .gift-bubble {
+    background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+    color: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    margin-top: 16px;
+    text-align: center;
+    box-shadow: 0 8px 24px rgba(232, 132, 42, 0.25);
+  }
+  .gift-bubble .gift-title {
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 6px;
+  }
+  .gift-bubble .gift-text {
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.4;
+  }
+  .gift-bubble .gift-sub {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 8px;
+  }
+
+  .actions {
+    margin-top: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .btn {
+    border: 0;
+    border-radius: 14px;
+    padding: 16px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .btn-primary { background: var(--ink); color: #fff; }
+  .btn-secondary { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+  .btn:active { transform: scale(0.98); }
+
+  .footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 28px;
+    line-height: 1.8;
+  }
+  .footer .brand {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* ===== Share Card (off-screen, used for image generation) ===== */
+  .share-card-wrap {
+    position: fixed;
+    left: -9999px;
+    top: 0;
+    width: 540px;
+    background: var(--bg);
+  }
+  .share-card {
+    width: 540px;
+    background: var(--bg);
+    padding: 36px 32px 28px;
+    font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    color: var(--ink);
+  }
+  .sc-tag {
+    display: inline-block;
+    font-size: 13px;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    background: var(--paper);
+    border-radius: 999px;
+    padding: 6px 14px;
+    letter-spacing: 0.05em;
+  }
+  .sc-title {
+    font-size: 24px;
+    font-weight: 900;
+    margin: 14px 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .sc-title .accent { color: var(--accent); }
+  .sc-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 22px;
+  }
+  .sc-painter-block {
+    background: var(--ink);
+    color: #fff;
+    border-radius: 22px;
+    padding: 32px 28px;
+    text-align: center;
+    box-shadow: 0 12px 32px rgba(60, 45, 20, 0.15);
+  }
+  .sc-painter-tag {
+    display: inline-block;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    padding: 5px 12px;
+    margin-bottom: 16px;
+    letter-spacing: 0.1em;
+  }
+  .sc-painter-name {
+    font-size: 44px;
+    font-weight: 900;
+    line-height: 1.1;
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+  .sc-painter-en {
+    display: block;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    margin-top: 10px;
+  }
+  .sc-painter-school {
+    font-size: 13px;
+    color: var(--accent);
+    margin-top: 12px;
+    font-weight: 600;
+  }
+  .sc-match {
+    margin-top: 22px;
+    padding-top: 22px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  .sc-match-label {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 0.08em;
+  }
+  .sc-match-num {
+    font-size: 42px;
+    font-weight: 900;
+    color: var(--accent);
+    margin-top: 4px;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .sc-match-num small { font-size: 18px; }
+  .sc-desc {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 22px;
+    margin-top: 22px;
+    font-size: 14px;
+    line-height: 1.85;
+    color: var(--ink);
+  }
+  .sc-future {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    padding: 16px 18px;
+    border-radius: 0 12px 12px 0;
+    margin-top: 14px;
+    font-size: 14px;
+    line-height: 1.75;
+  }
+  .sc-future strong {
+    display: block;
+    color: var(--accent);
+    margin-bottom: 4px;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+  }
+  .sc-gift {
+    background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+    color: #fff;
+    border-radius: 18px;
+    padding: 22px;
+    margin-top: 16px;
+    text-align: center;
+    box-shadow: 0 8px 24px rgba(232, 132, 42, 0.25);
+  }
+  .sc-gift-title {
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 8px;
+  }
+  .sc-gift-main {
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.3;
+  }
+  .sc-slogan {
+    text-align: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-top: 22px;
+    padding: 0 20px;
+    line-height: 1.5;
+  }
+  .sc-qr-block {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 22px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 18px 20px;
+  }
+  .sc-qr-block #sc-qrcode { width: 90px; height: 90px; flex-shrink: 0; }
+  .sc-qr-block #sc-qrcode canvas { width: 100% !important; height: 100% !important; }
+  .sc-qr-text {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink);
+  }
+  .sc-qr-text strong {
+    color: var(--accent);
+    font-size: 15px;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .sc-footer {
+    text-align: center;
+    margin-top: 22px;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .sc-footer .brand {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* Share preview modal */
+  .share-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 999;
+    overflow-y: auto;
+    padding: 20px;
+  }
+  .share-modal.active { display: block; }
+  .share-modal-inner {
+    max-width: 540px;
+    margin: 20px auto;
+    background: #fff;
+    border-radius: 18px;
+    overflow: hidden;
+    text-align: center;
+  }
+  .share-modal-inner img { width: 100%; display: block; }
+  .share-modal-tip {
+    color: #fff;
+    text-align: center;
+    font-size: 14px;
+    padding: 14px;
+    line-height: 1.7;
+  }
+  .share-modal-close {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    color: #fff;
+    font-size: 28px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- Welcome screen -->
+  <section class="screen active" id="screen-welcome">
+    <div class="welcome">
+      <span class="brand-tag">涂涂笔芯 tútú art school · 出品</span>
+      <div class="doodle">🎨 ✏️ 🖌️</div>
+      <h1>TuBTI<br><span class="accent">你是哪个画家？</span></h1>
+      <p class="subtitle">20 道题，10 位大师，<br>看看你的灵魂里住着谁。</p>
+      <button class="start-btn" onclick="app.start()">开始测试</button>
+      <div class="meta">耗时约 2 分钟 · 测完可分享给朋友</div>
+    </div>
+  </section>
+
+  <!-- Question screen -->
+  <section class="screen" id="screen-question">
+    <div class="qcard">
+      <div class="progress-row">
+        <button class="back-btn" id="back-btn" onclick="app.back()" title="上一题">←</button>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="progress-num" id="progress-num">1 / 20</div>
+      </div>
+      <div id="hit-badge"></div>
+      <h2 class="question-text" id="question-text"></h2>
+      <p class="question-hint" id="question-hint">凭直觉选，没有对错</p>
+      <div class="options" id="options"></div>
+    </div>
+  </section>
+
+  <!-- Result screen -->
+  <section class="screen" id="screen-result">
+    <div class="result-card">
+      <div class="result-header">
+        <span class="result-tag">你的画家人格</span>
+        <h1 class="result-painter" id="r-painter">
+          <span id="r-name">梵高</span>
+          <span class="en" id="r-en">Van Gogh</span>
+        </h1>
+        <div class="result-school" id="r-school">— 后印象派 · 燃烧者 —</div>
+        <div class="match-row">
+          <div class="match-label">匹配度</div>
+          <div class="match-num"><span id="r-match">92</span><small>%</small></div>
+        </div>
+      </div>
+      <div class="result-body" id="r-body">
+        <!-- filled by JS -->
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="app.generateShareImage()">🎨 生成分享图</button>
+      <button class="btn btn-secondary" onclick="app.restart()">重新测试</button>
+    </div>
+    <div class="footer">
+      <div style="font-size:15px; color:var(--ink); font-weight:700; margin-bottom:6px;">"孩子的画，是孩子的话。"</div>
+      <span class="brand">涂涂笔芯 tútú art school</span><br>
+      📍 上海市杨浦区紫荆广场 L3-03<br>
+      <br>
+      © 涂涂笔芯 2026
+    </div>
+  </section>
+
+</div>
+
+<!-- Off-screen share card for image generation -->
+<div class="share-card-wrap">
+  <div class="share-card" id="share-card">
+    <span class="sc-tag">涂涂笔芯 · TuBTI</span>
+    <div class="sc-title">你是哪个画家？<br><span class="accent">我的画家人格是…</span></div>
+    <div class="sc-sub">20 道题 · 10 位大师 · 凭直觉测出来的真相</div>
+
+    <div class="sc-painter-block">
+      <span class="sc-painter-tag">YOUR ARTIST PERSONALITY</span>
+      <h2 class="sc-painter-name" id="sc-name">梵高<span class="sc-painter-en" id="sc-en">Vincent van Gogh</span></h2>
+      <div class="sc-painter-school" id="sc-school">— 后印象派 · 燃烧者 —</div>
+      <div class="sc-match">
+        <div class="sc-match-label">匹配度</div>
+        <div class="sc-match-num"><span id="sc-match">92</span><small>%</small></div>
+      </div>
+    </div>
+
+    <div class="sc-desc" id="sc-desc"></div>
+
+    <div class="sc-future">
+      <strong>你会成为什么样的画家</strong>
+      <span id="sc-future"></span>
+    </div>
+
+    <div class="sc-gift">
+      <div class="sc-gift-title">🎁 涂涂笔芯独家福利</div>
+      <div class="sc-gift-main">凭测试结果到店<br>送一节体验课</div>
+    </div>
+
+    <div class="sc-qr-block">
+      <div id="sc-qrcode"></div>
+      <div class="sc-qr-text">
+        <strong>扫码测你的画家人格</strong>
+        涂涂笔芯出品 · 2 分钟 · 看看你像哪个大师
+      </div>
+    </div>
+
+    <div class="sc-slogan">"孩子的画，是孩子的话。"</div>
+
+    <div class="sc-footer">
+      🎨 <span class="brand">涂涂笔芯 tútú art school</span><br>
+      📍 上海市杨浦区紫荆广场 L3-03<br>
+      © 涂涂笔芯 2026
+    </div>
+  </div>
+</div>
+
+<!-- Share modal -->
+<div class="share-modal" id="share-modal">
+  <button class="share-modal-close" onclick="app.closeShareModal()">×</button>
+  <div class="share-modal-inner">
+    <img id="share-image" alt="分享图">
+  </div>
+  <div class="share-modal-tip">
+    长按图片保存到相册<br>
+    然后发到朋友圈或群里 ✨
+  </div>
+</div>
+
+<script>
+// ============ DATA ============
+const PAINTERS = {
+  vangogh: {
+    name: '梵高',
+    en: 'Vincent van Gogh',
+    school: '后印象派 · 燃烧者',
+    desc: [
+      '你是一个对世界感受特别强烈的小孩。看到一片金黄的麦田，你会兴奋到说不出话；看到一只孤独的小狗，你会偷偷掉眼泪。你的颜色比别人更亮，情绪比别人更深，画里的每一笔都在燃烧。',
+      '你不擅长"画得像"，但你最擅长"画得让人心里一动"。你画的不是看到的世界，是感受到的世界。',
+    ],
+    future: '大概率会成为那种"看到就想哭"的画家——因为你画的不是画，是你活过的瞬间。',
+    tip: '这种孩子最需要的是<strong>被看见</strong>，而不是被纠正。下次他在纸上乱涂的时候，先别说"画得不像"，问一句"你画的是什么心情？"',
+  },
+  monet: {
+    name: '莫奈',
+    en: 'Claude Monet',
+    school: '印象派 · 光的捕手',
+    desc: [
+      '你是一个安静、慢、爱发呆的小孩。别人在讨论"怎么画得像"，你已经在想"光是怎么落在树叶上的"。你不太争抢，也不爱解释，但你看到的世界比别人的更柔软、更有层次。',
+      '别人画一棵树，画的是树。你画一棵树，画的是这一刻阳光穿过叶子的样子。',
+    ],
+    future: '会成为那种"让所有人在你画前安静下来"的画家——你的画不喧哗，但有人会站在前面看半个小时。',
+    tip: '这种孩子常被误解为"反应慢"，其实是<strong>感知通道更宽</strong>。多带他去花园、湖边、清晨的公园，他会用画告诉你那里有什么。',
+  },
+  picasso: {
+    name: '毕加索',
+    en: 'Pablo Picasso',
+    school: '立体派 · 不安分',
+    desc: [
+      '你是一个永远在变的小孩——这周喜欢画恐龙，下周突然只画方块，再下周开始研究人物表情。爸妈可能会担心你"不专一"，但其实你只是太聪明了，一种风格满足不了你。',
+      '你画一只猫，可能从五个角度画，一张纸上五只眼睛——别人看不懂，但你心里清清楚楚。',
+    ],
+    future: '会成为那种"打破规则"的画家。看不懂的画，往往是最厉害的画。',
+    tip: '别强求他"画完一种再换"。<strong>多换主题、多给纸张</strong>，他越折腾越聪明。这种孩子的天赋就是"不被定义"。',
+  },
+  dali: {
+    name: '达利',
+    en: 'Salvador Dalí',
+    school: '超现实主义 · 戏精',
+    desc: [
+      '你是一个脑子里住着一整个奇幻世界的小孩。你画的钟会融化、你画的狗有六条腿、你画的太阳脸上长着胡子。大人觉得你"乱画"，其实你是在画你看到的另一个宇宙。',
+      '你画的东西不一定符合物理规律，但每一个细节都有逻辑——只是那是你自己的逻辑。',
+    ],
+    future: '会成为那种让人惊掉下巴的画家——因为你不但有才华，还知道怎么让全世界都看见你。',
+    tip: '这种孩子最怕被说"画得不对"。<strong>请相信他的奇思妙想</strong>，多问一句"为什么是这样的？"，他会给你讲一个比电影还精彩的故事。',
+  },
+  mondrian: {
+    name: '蒙德里安',
+    en: 'Piet Mondrian',
+    school: '抽象艺术 · 秩序狂',
+    desc: [
+      '你是一个外表安静、内心特别讲究的小孩。你的铅笔永远按颜色排好，你的画永远有看不见的格子。别人说你"较真"，其实你只是知道：美是有规律的。',
+      '你画一棵树，会把它简化成最干净的形状。你不喜欢乱，不是因为强迫症，是因为你能看到别人看不到的"秩序之美"。',
+    ],
+    future: '会成为那种"一笔画错就重画一整张"的极致画家——这种人很少，但作品会让人记一辈子。',
+    tip: '这种孩子的纸笔一定要给最好的，<strong>不要催他</strong>。他慢，是因为在追求完美。给他时间，他会回报你一张完美的作品。',
+  },
+  pollock: {
+    name: '波洛克',
+    en: 'Jackson Pollock',
+    school: '抽象表现主义 · 混乱大师',
+    desc: [
+      '你是一个安静不下来的小孩。颜料溅到地上你说"这才好看"，纸不够大你说"我画到桌子上"，画笔太慢你说"我用手"。大人觉得你"破坏狂"，但其实你比所有人都更懂"自由"。',
+      '你画的不是物体，是动作；不是图像，是节奏。你的画里全是你的身体在跳舞。',
+    ],
+    future: '可能不会画"看得懂"的画，但你的画会让人想要跳起来——因为那里面装着真正的生命力。',
+    tip: '这种孩子需要<strong>大纸、大空间、可以不脏的衣服</strong>。别在家画，带他去画室，让他撒野。压抑这种天性，就是浪费一个未来的大师。',
+  },
+  warhol: {
+    name: '安迪·沃霍尔',
+    en: 'Andy Warhol',
+    school: '波普艺术 · 流量天才',
+    desc: [
+      '你是一个特别懂"什么会火"的小孩。你画一个苹果，会想"画 9 个会不会更酷"；你拍照会调角度，发朋友圈会想标题。大人觉得你"爱出风头"，其实你只是天生懂"传播"。',
+      '你的画总能戳中别人，因为你不只是在画，你在跟世界对话。',
+    ],
+    future: '大概率不只是画家——你会是那种把艺术变成产品、变成潮流的人。',
+    tip: '这种孩子的天赋藏在<strong>"商业感"</strong>里。多带他看展、看品牌、看广告，他不会被"带坏"，反而会更早找到自己的舞台。',
+  },
+  qibaishi: {
+    name: '齐白石',
+    en: 'Qi Baishi',
+    school: '中国画 · 生活流',
+    desc: [
+      '你是一个对日常充满好奇的小孩。一只蚂蚁、一只虾、一颗白菜，在你眼里都值得画。你不追求大场面，你的厉害在于"普通的东西被你画出来就特别"。',
+      '你不像别的小孩追着画"大主题"，你画的是身边的小事。但每一笔都有温度。',
+    ],
+    future: '会成为那种"画一只虾都能值钱"的大师——因为你画的不是物，是日子。',
+    tip: '这种孩子<strong>不要逼他画"高大上"的东西</strong>。让他画家里的猫、奶奶的手、阳台上的花。他画的"小"，将来都是大家追的"大"。',
+  },
+  frida: {
+    name: '弗里达·卡罗',
+    en: 'Frida Kahlo',
+    school: '超现实/自传 · 自传家',
+    desc: [
+      '你是一个特别懂自己情绪的小孩。开心、难过、生气、害怕，你都不藏着，全画出来。大人有时担心你"想太多"，但其实你比同龄人勇敢得多——因为你敢面对自己。',
+      '你画的不是花、不是风景，你画的是"我今天为什么这样"。你的画是日记，是镜子，是不说话的呐喊。',
+    ],
+    future: '会成为那种"画自己也能感动别人"的画家——你的画会成为别人的镜子。',
+    tip: '这种孩子情绪丰富，<strong>不要急着安慰，先让他画</strong>。画完再聊，他会告诉你心里发生了什么。绘画是他最重要的出口。',
+  },
+  banksy: {
+    name: '班克斯',
+    en: 'Banksy',
+    school: '街头艺术 · 神秘酷盖',
+    desc: [
+      '你是一个嘴上不说但脑子里有一堆想法的小孩。你画一只老鼠，但其实在画大人；你画一面墙，但其实在讲一个故事。别人不一定立刻懂你，但懂你的人会觉得"这小孩有点东西"。',
+      '你的画里总有"第二层意思"，那是你藏起来的小秘密。',
+    ],
+    future: '可能不会站在台前，但你的作品会到处都是——大家都想知道是谁画的。',
+    tip: '这种孩子<strong>需要被"读懂"</strong>，而不是被夸"漂亮"。看他的画时，多问一句"这里的小人在干嘛？"，他会眼睛一亮告诉你一个故事。',
+  },
+};
+
+const QUESTIONS = [
+  // 常规题（每题选 4 个选项，每个选项加分给某个画家）
+  {
+    text: '你画画时最常用什么姿势？',
+    options: [
+      { text: '坐得笔直，桌面整洁', score: { mondrian: 3 } },
+      { text: '趴在地上，纸越大越好', score: { pollock: 3 } },
+      { text: '靠在椅子上发呆，画两笔停三分钟', score: { monet: 3 } },
+      { text: '边走边画，到处跑', score: { picasso: 3 } },
+    ],
+  },
+  {
+    text: '画画前你会做什么？',
+    options: [
+      { text: '把所有笔按颜色摆好', score: { mondrian: 3 } },
+      { text: '想一个故事', score: { dali: 3, frida: 1 } },
+      { text: '找一个安静角落看会儿光', score: { monet: 3 } },
+      { text: '直接上手，边画边想', score: { pollock: 2, picasso: 2 } },
+    ],
+  },
+  {
+    text: '你最讨厌别人说你的画？',
+    options: [
+      { text: '"画得不像"', score: { vangogh: 2, dali: 2 } },
+      { text: '"画得太乱"', score: { pollock: 3 } },
+      { text: '"我看不懂"', score: { picasso: 2, banksy: 2 } },
+      { text: '"没意思"', score: { warhol: 3 } },
+    ],
+  },
+  {
+    text: '一个人在房间里你最想做什么？',
+    options: [
+      { text: '画自己的脸', score: { frida: 4 } },
+      { text: '听音乐画线条', score: { pollock: 2, picasso: 1 } },
+      { text: '看窗外发呆', score: { monet: 3 } },
+      { text: '在墙上画一只小老鼠', score: { banksy: 4 } },
+    ],
+  },
+  {
+    text: '你画一只猫，会怎么画？',
+    options: [
+      { text: '从五个角度画在一张纸上', score: { picasso: 4 } },
+      { text: '一只胡子翘上天的猫', score: { dali: 3 } },
+      { text: '工笔画一根毛一根毛', score: { qibaishi: 4 } },
+      { text: '只画爪子上的肉垫', score: { vangogh: 1, banksy: 2 } },
+    ],
+  },
+  {
+    text: '你最喜欢的颜料是？',
+    options: [
+      { text: '油画棒，浓重的那种', score: { vangogh: 3 } },
+      { text: '水彩，要透要薄', score: { monet: 3 } },
+      { text: '马克笔，要鲜艳', score: { warhol: 3 } },
+      { text: '墨汁和毛笔', score: { qibaishi: 4 } },
+    ],
+  },
+  {
+    text: '你画里最常出现的东西是？',
+    options: [
+      { text: '太阳和星星', score: { vangogh: 3 } },
+      { text: '一个人的脸', score: { frida: 3, picasso: 1 } },
+      { text: '小动物和植物', score: { qibaishi: 3, monet: 1 } },
+      { text: '抽象的形状和线条', score: { mondrian: 2, pollock: 2 } },
+    ],
+  },
+  {
+    text: '看到一幅名画，你最先注意？',
+    options: [
+      { text: '颜色亮不亮', score: { vangogh: 2, warhol: 2 } },
+      { text: '画的是谁、在干嘛', score: { frida: 2, qibaishi: 1 } },
+      { text: '构图整不整齐', score: { mondrian: 4 } },
+      { text: '画家想表达什么', score: { banksy: 3, dali: 1 } },
+    ],
+  },
+  {
+    text: '老师布置"画一棵树"，你会？',
+    options: [
+      { text: '画一棵真实的树', score: { qibaishi: 2, monet: 2 } },
+      { text: '画一棵会哭的树', score: { dali: 3, frida: 1 } },
+      { text: '画一棵被砍倒的树', score: { banksy: 4 } },
+      { text: '画 100 棵一模一样的树', score: { warhol: 3, mondrian: 1 } },
+    ],
+  },
+  {
+    text: '你画完一张满意的画会？',
+    options: [
+      { text: '签上大名贴墙上', score: { warhol: 3, dali: 2 } },
+      { text: '收进抽屉只给自己看', score: { frida: 3, banksy: 2 } },
+      { text: '送给最爱的人', score: { qibaishi: 2, monet: 1 } },
+      { text: '看一会儿，然后开始画下一张', score: { picasso: 3, vangogh: 1 } },
+    ],
+  },
+  {
+    text: '你最讨厌的事情是？',
+    options: [
+      { text: '被打断', score: { mondrian: 3, monet: 2 } },
+      { text: '画到一半没颜料了', score: { pollock: 2, vangogh: 2 } },
+      { text: '别人把我的画评得头头是道', score: { banksy: 3, frida: 1 } },
+      { text: '画完没有人看', score: { warhol: 4 } },
+    ],
+  },
+  {
+    text: '你最喜欢的天气？',
+    options: [
+      { text: '雨天，灰蒙蒙的', score: { monet: 3, frida: 2 } },
+      { text: '大晴天，亮到睁不开眼', score: { vangogh: 4 } },
+      { text: '雪天，安静干净', score: { mondrian: 3 } },
+      { text: '台风天，越乱越兴奋', score: { pollock: 4 } },
+    ],
+  },
+  {
+    text: '画到一半的纸不小心被弄脏了？',
+    options: [
+      { text: '哎呀，那就让脏的部分变成画的一部分', score: { pollock: 3, picasso: 2 } },
+      { text: '心情瞬间崩溃', score: { mondrian: 4 } },
+      { text: '盯着脏的地方发呆，想能不能变成什么', score: { dali: 3 } },
+      { text: '没事，我换一张就行', score: { warhol: 2, qibaishi: 1 } },
+    ],
+  },
+  {
+    text: '你画画时喜欢有人在旁边吗？',
+    options: [
+      { text: '喜欢，最好有人夸我', score: { warhol: 3, dali: 2 } },
+      { text: '不喜欢，会分心', score: { mondrian: 3, monet: 2 } },
+      { text: '无所谓，反正我画的他们也看不懂', score: { banksy: 3, picasso: 2 } },
+      { text: '只想一个人画', score: { frida: 3, vangogh: 1 } },
+    ],
+  },
+  {
+    text: '一道光透过窗户照进来，你会？',
+    options: [
+      { text: '马上拿笔记下这一刻', score: { monet: 5 } },
+      { text: '走过去站在光里', score: { vangogh: 2, frida: 2 } },
+      { text: '看光的形状是不是几何', score: { mondrian: 3 } },
+      { text: '走过去关上窗帘', score: { banksy: 2, dali: 1 } },
+    ],
+  },
+  {
+    text: '你的卧室更接近？',
+    options: [
+      { text: '所有东西都摆得整整齐齐', score: { mondrian: 4 } },
+      { text: '到处都是画和颜料', score: { pollock: 3, vangogh: 2 } },
+      { text: '满墙海报和打卡照', score: { warhol: 3 } },
+      { text: '安静、有植物、有书', score: { monet: 3, qibaishi: 1 } },
+    ],
+  },
+  {
+    text: '你看到一只很丑的虫子会？',
+    options: [
+      { text: '蹲下来仔细观察然后画下来', score: { qibaishi: 4 } },
+      { text: '让它进入我的奇幻世界', score: { dali: 3 } },
+      { text: '害怕但记住了它的颜色', score: { vangogh: 2, frida: 2 } },
+      { text: '想到一个关于它的故事', score: { banksy: 2, picasso: 1 } },
+    ],
+  },
+  {
+    text: '别人问你"长大想做什么"，你会说？',
+    options: [
+      { text: '当画家', score: { vangogh: 1, qibaishi: 1, monet: 1, frida: 1 } },
+      { text: '不知道，但要做让别人记住的人', score: { warhol: 3, dali: 2 } },
+      { text: '保密', score: { banksy: 4 } },
+      { text: '我已经在做了', score: { picasso: 3, pollock: 1 } },
+    ],
+  },
+  // ===== HIT QUESTION 1 =====
+  {
+    hit: true,
+    text: '画废了一张画，你会？',
+    hint: '⚡ 灵魂题：凭第一反应',
+    options: [
+      { text: '撕了，眼泪掉下来', score: { vangogh: 10 } },
+      { text: '接着画，看会变成什么', score: { picasso: 10 } },
+      { text: '留着，以后做拼贴', score: { warhol: 10 } },
+      { text: '装裱起来，叫"残缺美"', score: { dali: 10 } },
+      { text: '默默叠好放进抽屉', score: { frida: 10 } },
+      { text: '不慌，重新拿一张白纸完美开始', score: { mondrian: 10 } },
+      { text: '顺手翻面继续用', score: { qibaishi: 10 } },
+      { text: '拍张照发朋友圈："这就是今天"', score: { banksy: 10 } },
+      { text: '滴几滴墨上去看会发生什么', score: { pollock: 10 } },
+      { text: '哦，废了就废了，转头去看云', score: { monet: 10 } },
+    ],
+  },
+  // ===== HIT QUESTION 2 =====
+  {
+    hit: true,
+    text: '如果一辈子只能用一种颜色画？',
+    hint: '⚡ 灵魂题：选你心里最先想到的那个',
+    options: [
+      { text: '黄 — 像太阳烧起来', score: { vangogh: 10 } },
+      { text: '灰 — 像清晨的雾', score: { monet: 10 } },
+      { text: '蓝 — 我的忧郁不需要解释', score: { picasso: 10 } },
+      { text: '紫 — 这是梦的颜色', score: { dali: 10 } },
+      { text: '白 — 留白才是最高级', score: { mondrian: 10 } },
+      { text: '金 — 闪闪发光最重要', score: { warhol: 10 } },
+      { text: '墨绿 — 像山、像水、像老朋友', score: { qibaishi: 10 } },
+      { text: '红 — 因为这是我的颜色', score: { frida: 10 } },
+      { text: '黑 — 黑色才是真相', score: { banksy: 10 } },
+      { text: '不可能！我要全部！', score: { pollock: 10 } },
+    ],
+  },
+];
+
+// ============ APP STATE ============
+const app = {
+  current: 0,
+  scores: {},
+  shuffledOrder: [],
+
+  history: [],
+
+  start() {
+    this.current = 0;
+    this.scores = {};
+    this.history = [];
+    Object.keys(PAINTERS).forEach(k => this.scores[k] = 0);
+    // 把 hit 题埋在第 8 和第 14 题位置（不要太前不要太后）
+    const regular = QUESTIONS.filter(q => !q.hit);
+    const hits = QUESTIONS.filter(q => q.hit);
+    // shuffle regular
+    const shuffled = [...regular].sort(() => Math.random() - 0.5);
+    // insert hits
+    shuffled.splice(7, 0, hits[0]);
+    shuffled.splice(13, 0, hits[1]);
+    this.shuffledOrder = shuffled;
+    this.show('question');
+    this.render();
+  },
+
+  back() {
+    if (this.current === 0 || this.history.length === 0) return;
+    // 把上一题的得分撤销
+    const last = this.history.pop();
+    Object.entries(last.score).forEach(([painter, points]) => {
+      this.scores[painter] = (this.scores[painter] || 0) - points;
+    });
+    this.current--;
+    this.render();
+  },
+
+  show(name) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + name).classList.add('active');
+    window.scrollTo(0, 0);
+  },
+
+  render() {
+    const q = this.shuffledOrder[this.current];
+    const total = this.shuffledOrder.length;
+    document.getElementById('progress-fill').style.width = ((this.current) / total * 100) + '%';
+    document.getElementById('progress-num').textContent = (this.current + 1) + ' / ' + total;
+    document.getElementById('question-text').textContent = q.text;
+    document.getElementById('question-hint').textContent = q.hint || '凭直觉选，没有对错';
+    document.getElementById('hit-badge').innerHTML = q.hit ? '<div class="hit-mark">⚡ 灵魂题</div>' : '';
+    document.getElementById('back-btn').disabled = (this.current === 0);
+
+    const optsEl = document.getElementById('options');
+    optsEl.innerHTML = '';
+    q.options.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'option';
+      btn.textContent = opt.text;
+      btn.onclick = () => this.answer(opt);
+      optsEl.appendChild(btn);
+    });
+  },
+
+  answer(opt) {
+    Object.entries(opt.score).forEach(([painter, points]) => {
+      this.scores[painter] = (this.scores[painter] || 0) + points;
+    });
+    this.history.push(opt);
+    this.current++;
+    if (this.current >= this.shuffledOrder.length) {
+      this.finish();
+    } else {
+      this.render();
+    }
+  },
+
+  finish() {
+    // 找出得分最高的画家
+    const sorted = Object.entries(this.scores).sort((a, b) => b[1] - a[1]);
+    const [topKey, topScore] = sorted[0];
+    const secondScore = sorted[1] ? sorted[1][1] : 0;
+    const totalScore = Object.values(this.scores).reduce((a, b) => a + b, 0);
+
+    // 匹配度计算：
+    // 基础 75%，加上 (top - second) / topScore * 20，再加 topScore/total 比例 5%
+    let match = 75;
+    if (topScore > 0) {
+      match += Math.round((topScore - secondScore) / topScore * 20);
+      match += Math.round(topScore / totalScore * 30);
+    }
+    match = Math.max(75, Math.min(99, match));
+    // 如果 top - second 差距特别大（>50%），给 100
+    if (topScore > 0 && (topScore - secondScore) / topScore > 0.5) match = 100;
+
+    this.currentResult = { painterKey: topKey, match };
+    this.renderResult(topKey, match);
+    this.show('result');
+  },
+
+  renderResult(key, match) {
+    const p = PAINTERS[key];
+    document.getElementById('r-name').textContent = p.name;
+    document.getElementById('r-en').textContent = p.en;
+    document.getElementById('r-school').textContent = '— ' + p.school + ' —';
+    document.getElementById('r-match').textContent = match;
+
+    const body = document.getElementById('r-body');
+    body.innerHTML = '';
+    p.desc.forEach(para => {
+      const el = document.createElement('p');
+      el.textContent = para;
+      body.appendChild(el);
+    });
+
+    // future highlight
+    const fut = document.createElement('div');
+    fut.className = 'highlight';
+    fut.innerHTML = '<strong>你会成为什么样的画家</strong>' + p.future;
+    body.appendChild(fut);
+
+    // brand bubble
+    const tip = document.createElement('div');
+    tip.className = 'brand-bubble';
+    tip.innerHTML = '🎨 <strong>涂涂笔芯 · 给家长的小提示：</strong><br>' + p.tip;
+    body.appendChild(tip);
+
+    // gift bubble (引流文案)
+    const gift = document.createElement('div');
+    gift.className = 'gift-bubble';
+    gift.innerHTML = '<div class="gift-title">🎁 涂涂笔芯独家福利</div>' +
+                     '<div class="gift-text">凭测试结果到店<br>送一节体验课</div>' +
+                     '<div class="gift-sub">📍 上海市杨浦区紫荆广场 L3-03</div>';
+    body.appendChild(gift);
+  },
+
+  // 当前结果（用于生成分享图）
+  currentResult: null,
+
+  populateShareCard() {
+    if (!this.currentResult) return;
+    const { painterKey, match } = this.currentResult;
+    const p = PAINTERS[painterKey];
+
+    document.getElementById('sc-name').firstChild.textContent = p.name;
+    document.getElementById('sc-en').textContent = p.en;
+    document.getElementById('sc-school').textContent = '— ' + p.school + ' —';
+    document.getElementById('sc-match').textContent = match;
+    document.getElementById('sc-desc').textContent = p.desc[0]; // 只用第一段，避免太长
+    document.getElementById('sc-future').textContent = p.future;
+
+    // 生成二维码
+    const qrEl = document.getElementById('sc-qrcode');
+    qrEl.innerHTML = '';
+    // 用当前页面 URL 作为二维码内容；本地打开时给一个友好提示
+    let qrUrl = window.location.href;
+    if (qrUrl.startsWith('file://')) {
+      qrUrl = 'https://tubti.example.com'; // 上线后替换为真实 URL
+    }
+    QRCode.toCanvas(qrEl, qrUrl, {
+      width: 180,
+      margin: 1,
+      color: { dark: '#2a2418', light: '#ffffff' },
+    }, (err) => {
+      if (err) console.error('QR code error:', err);
+    });
+  },
+
+  async generateShareImage() {
+    if (!this.currentResult) return;
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.textContent = '⏳ 生成中…';
+    btn.disabled = true;
+
+    try {
+      this.populateShareCard();
+      // 等一帧让 DOM 更新
+      await new Promise(r => setTimeout(r, 200));
+
+      const cardEl = document.getElementById('share-card');
+      const canvas = await html2canvas(cardEl, {
+        backgroundColor: '#faf6ee',
+        scale: 2, // 高清
+        useCORS: true,
+      });
+      const dataUrl = canvas.toDataURL('image/png');
+
+      // 显示在 modal 里
+      document.getElementById('share-image').src = dataUrl;
+      document.getElementById('share-modal').classList.add('active');
+    } catch (e) {
+      console.error('生成分享图失败:', e);
+      alert('生成失败了，截图分享也可以哦 :)');
+    } finally {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  },
+
+  closeShareModal() {
+    document.getElementById('share-modal').classList.remove('active');
+  },
+
+  restart() {
+    this.show('welcome');
+  },
+};
+</script>
+
+</body>
+</html>
